@@ -1,56 +1,107 @@
 import os
-import streamlit as st
 import tempfile
 import warnings
-warnings.filterwarnings('ignore')
 
+import streamlit as st
+
+from src.study_assistant.vectorstore import VectorDB
 from src.study_assistant.data_ingestion import DataIngestion
 
-st.set_page_config(page_title="Study Assistant", layout="wide")
+warnings.filterwarnings("ignore")
+
+st.set_page_config(
+    page_title="Study Assistant",
+    layout="wide"
+)
 
 st.title("Study Assistant")
+
+# Session state
+if "vectorstore" not in st.session_state:
+    st.session_state["vectorstore"] = VectorDB()
 
 if "data_ingestion" not in st.session_state:
     st.session_state["data_ingestion"] = DataIngestion()
 
+# Upload files
 uploaded_files = st.file_uploader(
     "Upload files",
     type=["pdf", "docx", "png", "jpg", "jpeg"],
     accept_multiple_files=True
 )
 
-all_docs = []
+# Buttons
+col1, col2 = st.columns(2)
 
-# BUTTON
-if st.button("Process Files"):
+# PROCESS BUTTON
+with col1:
 
-    if not uploaded_files:
-        st.warning("Please upload files first.")
+    if st.button("Process Files"):
 
-    else:
-        with st.spinner("Processing files..."):
+        if not uploaded_files:
+            st.warning("Please upload files first.")
 
-            for uploaded_file in uploaded_files:
+        else:
 
-                # Get extension
-                suffix = os.path.splitext(uploaded_file.name)[1]
+            all_docs = []
 
-                # Save temporarily
-                with tempfile.NamedTemporaryFile(
-                    delete=False,
-                    suffix=suffix
-                ) as tmp_file:
+            with st.spinner("Processing files..."):
 
-                    tmp_file.write(uploaded_file.getbuffer())
-                    temp_path = tmp_file.name
+                for uploaded_file in uploaded_files:
 
-                # Load documents
-                docs = st.session_state["data_ingestion"].load_doc(temp_path)
+                    try:
 
-                all_docs.extend(docs)
+                        suffix = os.path.splitext(
+                            uploaded_file.name
+                        )[1]
+
+                        with tempfile.NamedTemporaryFile(
+                            delete=False,
+                            suffix=suffix
+                        ) as tmp_file:
+
+                            tmp_file.write(
+                                uploaded_file.getbuffer()
+                            )
+
+                            temp_path = tmp_file.name
+
+                        docs = st.session_state[
+                            "data_ingestion"
+                        ].load_doc(temp_path)
+
+                        all_docs.extend(docs)
+
+                        os.remove(temp_path)
+
+                        st.success(
+                            f"{uploaded_file.name} processed"
+                        )
+
+                    except Exception as e:
+
+                        st.error(
+                            f"Error processing "
+                            f"{uploaded_file.name}: {e}"
+                        )
+
+                # Add to vector DB
+                st.session_state[
+                    "vectorstore"
+                ].add_documents(all_docs)
 
                 st.success(
-                    f"{uploaded_file.name} loaded successfully "
-                    f"({len(docs)} documents)"
+                    f"Added {len(all_docs)} documents "
+                    f"to vector database"
                 )
 
+# RESET BUTTON
+with col2:
+
+    if st.button("Reset Vector DB"):
+
+        st.session_state[
+            "vectorstore"
+        ].reset_vectorstore()
+
+        st.success("Vector database reset successfully")
