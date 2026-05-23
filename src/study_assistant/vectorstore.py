@@ -65,3 +65,13 @@ class VectorDB:
         logger.info("Resetting vectorstore")
 
         self.vectorstore = None
+        
+    def retrieve(self, query, k=5):
+        if self.vectorstore is None:
+            return []
+
+        retriever = self.vectorstore.as_retriever(
+            search_kwargs={"k": k}
+        )
+
+        return retriever.invoke(query)
