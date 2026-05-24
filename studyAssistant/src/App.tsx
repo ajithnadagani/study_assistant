@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import Upload from "./components/Upload";
 import Summary from "./components/Summary";
 import Quiz from "./components/Quiz";
@@ -7,10 +7,30 @@ import Revision from "./components/Revision";
 import "./App.css";
 
 const TABS = [
-  { id: "summary", label: "🧠 Summary" },
-  { id: "quiz", label: "🧩 Quiz" },
-  { id: "flashcards", label: "🗂 Flashcards" },
-  { id: "revision", label: "⚡ Revision" },
+  {
+    id: "summary",
+    label: "Summary",
+    icon: "🧠",
+    desc: "AI-generated overview",
+  },
+  {
+    id: "quiz",
+    label: "Quiz",
+    icon: "🧩",
+    desc: "Test your knowledge",
+  },
+  {
+    id: "flashcards",
+    label: "Flashcards",
+    icon: "🗂",
+    desc: "Flip & memorise",
+  },
+  {
+    id: "revision",
+    label: "Revision",
+    icon: "⚡",
+    desc: "Structured notes",
+  },
 ] as const;
 
 type TabId = (typeof TABS)[number]["id"];
@@ -27,6 +47,17 @@ const FEATURES = [
 export default function App() {
   const [docsLoaded, setDocsLoaded] = useState(false);
   const [activeTab, setActiveTab] = useState<TabId>("summary");
+  const featuresRef = useRef<HTMLElement>(null);
+
+  function handleLoaded(loaded: boolean) {
+    setDocsLoaded(loaded);
+    if (loaded) {
+      // Give React a tick to render the section before scrolling
+      setTimeout(() => {
+        featuresRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 80);
+    }
+  }
 
   return (
     <div className="app">
@@ -69,40 +100,40 @@ export default function App() {
             <p className="upload-card-sub">
               Upload a PDF or DOCX file to unlock all AI features.
             </p>
-            <Upload onLoaded={setDocsLoaded} />
+            <Upload onLoaded={handleLoaded} />
           </div>
         </div>
       </section>
 
-      {/* ── TABS (shown after docs are loaded) ── */}
-      {docsLoaded ? (
-        <main className="app-main">
-          <div className="tabs-container">
-            <div className="tab-bar" role="tablist">
-              {TABS.map((tab) => (
-                <button
-                  key={tab.id}
-                  role="tab"
-                  aria-selected={activeTab === tab.id}
-                  className={`tab-btn ${activeTab === tab.id ? "active" : ""}`}
-                  onClick={() => setActiveTab(tab.id)}>
-                  {tab.label}
-                </button>
-              ))}
-            </div>
-            <div className="tab-panel">
-              {activeTab === "summary" && <Summary />}
-              {activeTab === "quiz" && <Quiz />}
-              {activeTab === "flashcards" && <Flashcards />}
-              {activeTab === "revision" && <Revision />}
-            </div>
+      {/* ── FEATURE SECTION (shown after docs are loaded) ── */}
+      {docsLoaded && (
+        <main className="app-main" ref={featuresRef}>
+          {/* Mode selector cards */}
+          <div className="mode-grid" role="tablist" aria-label="Study modes">
+            {TABS.map((tab) => (
+              <button
+                key={tab.id}
+                role="tab"
+                aria-selected={activeTab === tab.id}
+                className={`mode-card ${activeTab === tab.id ? "active" : ""}`}
+                onClick={() => setActiveTab(tab.id)}
+              >
+                <span className="mode-icon" aria-hidden="true">{tab.icon}</span>
+                <span className="mode-label">{tab.label}</span>
+                <span className="mode-desc">{tab.desc}</span>
+                {activeTab === tab.id && <span className="mode-active-dot" aria-hidden="true" />}
+              </button>
+            ))}
+          </div>
+
+          {/* Panel */}
+          <div className="tab-panel" role="tabpanel">
+            {activeTab === "summary" && <Summary />}
+            {activeTab === "quiz" && <Quiz />}
+            {activeTab === "flashcards" && <Flashcards />}
+            {activeTab === "revision" && <Revision />}
           </div>
         </main>
-      ) : (
-        <div className="empty-state">
-          <span className="empty-icon">☝️</span>
-          <p>Process your files above to unlock all AI features</p>
-        </div>
       )}
     </div>
   );
