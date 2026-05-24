@@ -48,6 +48,8 @@ export default function Upload({ onLoaded }: Props) {
       setFiles([]);
       setStatus("Vector database reset.");
       onLoaded(false);
+      // Clear the file input so the same file can be re-selected after reset
+      if (inputRef.current) inputRef.current.value = "";
     } catch {
       setStatus("Reset failed.");
     } finally {

@@ -88,8 +88,7 @@ Rules:
 }}"""
 
     response = llm.invoke(prompt).content
-    logger.info(f"MCQ raw response (first 200 chars): {response[:200]}")
-
+   
     try:
         data = _extract_json(response)
         validated = MCQResponse(**data)

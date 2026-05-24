@@ -43,7 +43,16 @@ export async function fetchSummary(): Promise<string> {
 
 export async function fetchQuiz(): Promise<MCQItem[]> {
   const res = await fetch(`${BASE}/quiz`);
-  if (!res.ok) throw new Error((await res.json()).detail ?? "Failed");
+  if (!res.ok) {
+    let detail = "Failed to generate quiz";
+    try {
+      const data = await res.json();
+      detail = data.detail ?? detail;
+    } catch {
+      detail = (await res.text()) || detail;
+    }
+    throw new Error(detail);
+  }
   return res.json();
 }
 

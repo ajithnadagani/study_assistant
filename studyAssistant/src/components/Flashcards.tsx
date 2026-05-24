@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { fetchFlashcards } from "../api";
 import type { FlashcardItem } from "../api";
 
@@ -37,6 +37,11 @@ export default function Flashcards() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
+  useEffect(() => {
+    generate();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   async function generate() {
     setLoading(true);
     setError("");
@@ -51,13 +56,32 @@ export default function Flashcards() {
     }
   }
 
+  if (loading) {
+    return (
+      <div className="tab-content">
+        <div className="auto-loading">
+          <div className="spinner" aria-hidden="true" />
+          <p>Generating flashcards…</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="tab-content">
+        <div className="auto-error">
+          <p className="error-msg">{error}</p>
+          <button className="btn btn-primary" onClick={generate}>
+            Try Again
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="tab-content">
-      <h2>🗂 Flashcards</h2>
-      <button className="btn btn-primary" onClick={generate} disabled={loading}>
-        {loading ? "Generating…" : "Generate Flashcards"}
-      </button>
-      {error && <p className="error-msg">{error}</p>}
       {cards.length > 0 && (
         <>
           <p className="cards-hint">
