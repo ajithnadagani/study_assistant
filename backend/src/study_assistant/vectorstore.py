@@ -1,4 +1,6 @@
+import os
 import sys
+import ssl
 from typing import List, Optional
 
 from langchain_core.documents import Document
@@ -6,6 +8,15 @@ from langchain_community.vectorstores import FAISS
 from langchain_huggingface import HuggingFaceEmbeddings
 
 from src.study_assistant import CustomException, logger
+
+# Fix SSL certificate verification failures on Windows
+import os
+os.environ['PYTHONHTTPSVERIFY'] = '0'
+
+os.environ["HF_HUB_DISABLE_SSL_VERIFICATION"] = "1"
+os.environ["CURL_CA_BUNDLE"] = ""
+os.environ["REQUESTS_CA_BUNDLE"] = ""
+ssl._create_default_https_context = ssl._create_unverified_context
 
 
 class VectorDB:
@@ -65,7 +76,7 @@ class VectorDB:
         logger.info("Resetting vectorstore")
 
         self.vectorstore = None
-        
+
     def retrieve(self, query, k=5):
         if self.vectorstore is None:
             return []
