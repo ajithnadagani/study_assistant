@@ -14,3 +14,7 @@ streamlit
 torchvision
 docx2txt
 unstructured
+fastapi
+uvicorn[standard]
+python-multipart
+pip-system-certs
